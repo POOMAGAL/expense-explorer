@@ -1,7 +1,10 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+
 from decouple import config
+import dj_database_url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,3 +121,23 @@ CORS_ALLOW_CREDENTIALS = True
 # File upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760
+
+# Database
+# Uses DATABASE_URL if present (Render/Postgres), otherwise falls back to local Postgres.
+DATABASES = {
+    "default": dj_database_url.config(
+        default=config(
+            "DATABASE_URL",
+            default=(
+                f"postgres://{config('DB_USER', default='postgres')}:"
+                f"{config('DB_PASSWORD', default='postgres')}@"
+                f"{config('DB_HOST', default='localhost')}:"
+                f"{config('DB_PORT', default='5432')}/"
+                f"{config('DB_NAME', default='expense_explorer')}"
+            ),
+        ),
+        conn_max_age=600,
+        ssl_require=True,
+    )
+}
+
