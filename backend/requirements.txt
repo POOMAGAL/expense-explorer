@@ -22,3 +22,4 @@ pandas
 pdfplumber
 reportlab
 Pillow
+openpyxl>=3.1.0
