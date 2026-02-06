@@ -26,7 +26,7 @@ class StatementParser:
         ],
         'Utilities': [
             'electric', 'water', 'internet', 'phone', 'utility', 
-            'vodafone', 'ooredoo', 'kahrmaa'  # Qatar telcos/utilities
+            'vodafone', 'ooredoo', 'kahrmaa', 'TANGEDCO', 'vodafone Idea'# Qatar telcos/utilities
         ],
         'Shopping': [
             'amazon', 'shop', 'store', 'mall', 'retail', 'market', 'hyper market',
@@ -38,11 +38,20 @@ class StatementParser:
         ],
         'Travel': [
             'hotel', 'airline', 'booking', 'airbnb', 'flight', 'travel', 
-            'holiday inn', 'qatar rail'
+            'holiday inn', 'qatar rail', 'Trip', 'visit'
         ],
         'Entertainment': [
             'cinema', 'movie', 'theatre', 'spotify', 'netflix', 'game'
         ],
+        'Mutual Funds & Stocks': [
+            'mutual fund', 'national pension scheme'
+        ],
+        'Real Estate': ['building'],
+        'Investments': ['sbi gold fund', 'gold bond'],
+        'Loan': ['loan'],
+        'Savings': ['life insurance corporation', 'pnbmetlife'],
+        'Home': ['cpt', 'home monthly', 'kumar monthly'],
+        'Education': ['pearling', 'psi', 'swimming']
     }
 
 
