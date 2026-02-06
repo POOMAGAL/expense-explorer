@@ -390,49 +390,63 @@ function Dashboard() {
 
       {/* Summary cards */}
       <div style={styles.summaryCards}>
-        <div
-          style={{ ...styles.summaryCard, background: "#667eea" }}
-        >
+        {/* Total Spending */}
+        <div style={{ ...styles.summaryCard, background: "#667eea" }}>
           <div style={styles.summaryIcon}>💸</div>
           <div>
             <div style={styles.summaryLabel}>Total Spending</div>
             <div style={styles.summaryValue}>
               {formatAmount(
-                analytics.summary?.total_spending ??
-                  analytics.summary?.totalspending
+                analytics?.summary?.total_spending ??
+                  analytics?.summary?.totalspending ??
+                  0
               )}
             </div>
           </div>
         </div>
 
-        <div
-          style={{ ...styles.summaryCard, background: "#e74c3c" }}
-        >
+        {/* Total Income */}
+        <div style={{ ...styles.summaryCard, background: "#27ae60" }}>
+          <div style={styles.summaryIcon}>💰</div>
+          <div>
+            <div style={styles.summaryLabel}>Total Income</div>
+            <div style={styles.summaryValue}>
+              {formatAmount(
+                analytics?.summary?.total_income ??
+                  analytics?.summary?.totalincome ??
+                  0
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Categories */}
+        <div style={{ ...styles.summaryCard, background: "#e74c3c" }}>
           <div style={styles.summaryIcon}>📂</div>
           <div>
             <div style={styles.summaryLabel}>Categories</div>
             <div style={styles.summaryValue}>
-              {analytics.summary?.total_categories ??
-                analytics.summary?.totalcategories ??
+              {analytics?.summary?.total_categories ??
+                analytics?.summary?.totalcategories ??
                 0}
             </div>
           </div>
         </div>
 
-        <div
-          style={{ ...styles.summaryCard, background: "#27ae60" }}
-        >
+        {/* Transactions */}
+        <div style={{ ...styles.summaryCard, background: "#3498db" }}>
           <div style={styles.summaryIcon}>🧾</div>
           <div>
             <div style={styles.summaryLabel}>Transactions</div>
             <div style={styles.summaryValue}>
-              {analytics.summary?.total_transactions ??
-                analytics.summary?.totaltransactions ??
+              {analytics?.summary?.total_transactions ??
+                analytics?.summary?.totaltransactions ??
                 0}
             </div>
           </div>
         </div>
       </div>
+
 
       {/* Category Filter Section */}
       <div style={styles.categoryFilterSection}>

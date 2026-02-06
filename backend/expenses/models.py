@@ -22,7 +22,7 @@ class Statement(models.Model):
     """Uploaded credit card statements"""
     bank_account = models.ForeignKey(BankAccount, on_delete=models.CASCADE, related_name='statements')
     file = models.FileField(upload_to='statements/%Y/%m/')
-    file_type = models.CharField(max_length=10, choices=[('csv', 'CSV'), ('pdf', 'PDF')])
+    file_type = models.CharField(max_length=10, choices=[('csv', 'CSV'), ('pdf', 'PDF'), ('xlsx', 'XLSX'), ('xls', 'XLS')])
     uploaded_at = models.DateTimeField(auto_now_add=True)
     processed = models.BooleanField(default=False)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -59,6 +59,8 @@ class Transaction(models.Model):
     description = models.CharField(max_length=500)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     category = models.CharField(max_length=100, choices=CATEGORY_CHOICES, default='Other')
+     # NEW: True = income (credit), False = expense (debit)
+    is_income = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

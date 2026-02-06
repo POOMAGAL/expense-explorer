@@ -34,8 +34,19 @@ function UploadStatement() {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
-      const fileType = selectedFile.name.toLowerCase().endsWith('.csv') ? 'csv' : 'pdf';
+      const name = selectedFile.name.toLowerCase();
+      let fileType = "pdf"; // default
+
+      if (name.endsWith(".csv")) {
+        fileType = "csv";
+      } else if (name.endsWith(".xls") || name.endsWith(".xlsx")) {
+        fileType = "xlsx";
+      } else if (name.endsWith(".pdf")) {
+        fileType = "pdf";
+      }
+
       setFile({ file: selectedFile, type: fileType });
+
     }
   };
 
@@ -110,7 +121,7 @@ function UploadStatement() {
             <input
               type="file"
               id="file-upload"
-              accept=".csv,.pdf"
+              accept=".csv,.pdf,.xls,.xlsx"
               onChange={handleFileChange}
               style={styles.fileInput}
             />
@@ -119,7 +130,7 @@ function UploadStatement() {
               <div style={styles.uploadText}>
                 {file ? file.file.name : 'Click to browse or drag and drop'}
               </div>
-              <div style={styles.uploadHint}>Accepted formats: CSV, PDF</div>
+              <div style={styles.uploadHint}>Accepted formats: CSV, PDF, Excel (.xls, .xlsx)</div>
             </label>
           </div>
 

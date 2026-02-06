@@ -93,14 +93,20 @@ class StatementViewSet(viewsets.ModelViewSet):
             # Parse the statement
             try:
                 file_path = statement.file.path
-                if statement.file_type == 'csv':
+                ftype = statement.file_type.lower()
+
+                if ftype == 'csv':
                     transactions_data = StatementParser.parse_csv(file_path)
+                elif ftype in ('xls', 'xlsx'):
+                    transactions_data = StatementParser.parse_excel(file_path)
                 else:
                     transactions_data = StatementParser.parse_pdf(file_path)
+
                 
                 # Create transactions
                 # Create transactions
-                total = Decimal('0')
+                expense_total = Decimal('0')
+                income_total = Decimal('0')  # for future use / debugging
 
                 for trans_data in transactions_data:
                     amount = trans_data.get('amount')
@@ -114,19 +120,30 @@ class StatementViewSet(viewsets.ModelViewSet):
                         continue
 
                     trans_data['amount'] = amount
-                    Transaction.objects.create(statement=statement, **trans_data)
-                    total += amount
+                    is_income = bool(trans_data.get('is_income', False))
 
-                
-                statement.total_amount = total
+                    Transaction.objects.create(statement=statement, **trans_data)
+
+                    if is_income:
+                        income_total += amount
+                    else:
+                        expense_total += amount
+
+                # Store only expenses in Statement.total_amount
+                statement.total_amount = expense_total
                 statement.processed = True
                 statement.save()
-                
-                return Response({
-                    'message': 'Statement processed successfully',
-                    'transaction_count': len(transactions_data),
-                    'total_amount': float(total)
-                }, status=status.HTTP_201_CREATED)
+
+                return Response(
+                    {
+                        'message': 'Statement processed successfully',
+                        'transaction_count': len(transactions_data),
+                        'total_amount': float(expense_total),   # total spending
+                        'total_income': float(income_total),    # optional, for your info
+                    },
+                    status=status.HTTP_201_CREATED,
+                )
+
             
             except Exception as e:
                 statement.delete()
@@ -185,19 +202,32 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
         # Use the same filtering logic as get_queryset
         transactions = self.get_queryset()
 
-        total_spending = transactions.aggregate(total=Sum('amount'))['total'] or 0
+        expenses = transactions.filter(is_income=False)
+        income_qs = transactions.filter(is_income=True)  # for future PDF usage
+
+        total_spending = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        total_transactions = expenses.count()
+        categories = list(
+            expenses.values('category').annotate(
+                total=Sum('amount'),
+                count=Count('id')
+            ).order_by('-total')[:5]
+        )
+
+
+        total_spending = expenses.aggregate(total=Sum('amount'))['total'] or 0
         total_transactions = transactions.count()
 
         # Top 5 categories
         categories = list(
-            transactions.values('category')
+            expenses.values('category')
             .annotate(total=Sum('amount'), count=Count('id'))
             .order_by('-total')
         )
 
         # Recent 15 transactions
         recent_transactions = list(
-            transactions.order_by('-date')[:15]
+            expenses.order_by('-date')[:15]
         )
 
         # Start PDF
@@ -333,32 +363,37 @@ def dashboard_analytics(request):
     statement_id = request.query_params.get('statement')
 
     # Base queryset
-    transactions = Transaction.objects.filter(statement__bank_account__user=request.user)
+    transactions = Transaction.objects.filter(
+        statement__bank_account__user=request.user
+    )
     if bank_id:
         transactions = transactions.filter(statement__bank_account_id=bank_id)
-    
     # NEW: filter by specific statement if provided
     if statement_id:
         transactions = transactions.filter(statement_id=statement_id)
 
-    # Total spending
-    total_spending = transactions.aggregate(total=Sum('amount'))['total'] or 0
-    
-    # Total transactions
-    total_transactions = transactions.count()
-    
-    # Categories
-    categories = transactions.values('category').annotate(
+    # Split into expenses and income
+    expense_qs = transactions.filter(is_income=False)
+    income_qs = transactions.filter(is_income=True)
+
+    # Totals
+    total_spending = expense_qs.aggregate(total=Sum('amount'))['total'] or 0
+    total_income = income_qs.aggregate(total=Sum('amount'))['total'] or 0
+    total_transactions = transactions.count()  # all rows (income + expense)
+
+    # Categories (expenses only)
+    categories = expense_qs.values('category').annotate(
         total=Sum('amount'),
         count=Count('id')
     ).order_by('-total')
+
     
     # Top 5 and Lowest 5 expenses
     top_expenses = list(categories[:5])
     lowest_expenses = list(categories.order_by('total')[:5])
     
     # Spending by day of week
-    spending_by_day = transactions.annotate(
+    spending_by_day = expense_qs.annotate(
         day=ExtractWeekDay('date')
     ).values('day').annotate(total=Sum('amount')).order_by('day')
     
@@ -368,7 +403,7 @@ def dashboard_analytics(request):
         day_spending[day_names[item['day'] - 1]] = float(item['total'])
     
     # Monthly trend
-    monthly_trend = transactions.annotate(
+    monthly_trend = expense_qs.annotate(
         month=TruncMonth('date')
     ).values('month').annotate(total=Sum('amount')).order_by('month')
     
@@ -403,6 +438,7 @@ def dashboard_analytics(request):
     return Response({
         'summary': {
             'total_spending': float(total_spending),
+            'total_income': float(total_income),
             'total_transactions': total_transactions,
             'total_categories': len(categories),
         },
